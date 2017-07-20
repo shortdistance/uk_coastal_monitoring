@@ -1,0 +1,26 @@
+{
+  "name": "Flask Heroku Project-Wave Monitor",
+  "description": "Flask Heroku Project-Wave Monitor",
+  "keywords": [
+    "flask",
+    "python",
+    "sample"
+  ],
+  "repository": "https://github.com/yefim/flask-heroku-sample",
+  "addons": [
+    {
+      "plan": "rabbitmq-bigwig:pipkin",
+      "as": "RMQ"
+    },
+    {
+      "plan": "heroku-redis:hobby-dev",
+      "as": "REDIS"
+    },
+    {
+      "plan": "heroku-postgresql",
+      "options": {
+        "version": "9.5"
+      }
+    }
+  ]
+}

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="apple-touch-icon-precomposed" href="{{ url_for('static',filename='img/app-icon72x72@2x.png') }}">
+
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/gmaps-sidebar.css') }}"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='map-icon/css/map-icons.css') }} ">
+    <!-- getmdl -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.1.1/material.indigo-pink.min.css">
+
+    <!--getmdl-select-->
+    <link rel="stylesheet" href="https://cdn.rawgit.com/CreativeIT/getmdl-select/master/getmdl-select.min.css">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/mprogress.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/demo.css') }}"/>
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+         * element that contains the map. */
+
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body, #map {
+            height: 100%;
+            font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+
+        .lorem {
+            font-style: italic;
+            color: #000000;
+        }
+
+        .demo-card-wide.mdl-card {
+            width: 300px;
+        }
+
+        .demo-card-wide > .mdl-card__title {
+            color: #fff;
+            height: 100px;
+        }
+
+        .demo-card-wide > .mdl-card__title_waves {
+            color: #fff;
+            height: 100px;
+            background: url('{{ url_for("static", filename="img/Waves.png") }}') center / cover;
+        }
+
+        .demo-card-wide > .mdl-card__title_tides {
+            color: #000000;
+            height: 100px;
+            background: url('{{ url_for("static", filename="img/Tides.png") }}') center / cover;
+        }
+
+        .demo-card-wide > .mdl-card__menu {
+            color: #fff;
+        }
+
+        .red {
+            background: red
+        }
+    </style>
+
+</head>
+<body>
+<a href="https://github.com/d3/d3">
+    <img style="position:fixed;top:0;right:0;border:0;z-index:2;" width="149"
+         height="149" src="{{ url_for('static',filename='img/forkme.png') }}" alt="Fork me on GitHub">
+</a>
+<div id="sidebar" class="sidebar collapsed">
+    <!-- Nav tabs -->
+    <div class="sidebar-tabs">
+        <ul role="tablist">
+            <li><a href="#desc" role="tab"><i class="fa fa-question"></i></a></li>
+            <li><a href="#wave" role="tab"><i class="fa fa-bar-chart"></i></a></li>
+            <li><a href="#tide" role="tab"><i class="fa fa-line-chart"></i></a></li>
+            <li><a href="#play" role="tab"><i class="fa fa-play"></i></a></li>
+            <li><a href="#download" role="tab"><i class="fa fa-download"></i></a></li>
+        </ul>
+
+        <ul role="tablist">
+            <li><a href="#settings" role="tab"><i class="fa fa-gear"></i></a></li>
+        </ul>
+    </div>
+
+    <!-- Tab panes -->
+    <div class="sidebar-content">
+        <div class="sidebar-pane" id="desc">
+            <h1 class="sidebar-header">
+                Description
+                <span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+            </h1>
+
+            <p class="lorem">Arrow direction: Wave/Wind direction</p>
+            <hr/>
+            <p class="lorem">Arrow size: Wave height/Wind speed</p>
+            <hr/>
+            <p class="lorem">Arrow color: Temperature</p>
+            <img style="width: 60%;height:60%;" src="{{ url_for('static', filename='img/temperature.png') }}"/>
+            <hr/>
+
+            <p class="lorem">Data source</p>
+            <img style="width: 60%;height:60%;" src="{{ url_for('static', filename='img/dataset_source.png') }}"/>
+
+        </div>
+
+        <div class="sidebar-pane" id="wave">
+            <h1 class="sidebar-header">Wave Monitor<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+            </h1>
+
+            <table class="mdl-data-table">
+                <thead>
+                <tr>
+                    <th>Sensor</th>
+                    <th>hs</th>
+                    <th>sst</th>
+                    <th>Direc</th>
+                </tr>
+                </thead>
+                <tbody id="wave_results">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="sidebar-pane" id="tide">
+            <h1 class="sidebar-header">Tide Monitor<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+            </h1>
+            <table class="mdl-data-table">
+                <thead>
+                <tr>
+                    <th>Sensor</th>
+                    <th>hs</th>
+                </tr>
+                </thead>
+                <tbody id="tide_results">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="sidebar-pane" id="play">
+            <h1 class="sidebar-header">History play<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+            </h1>
+            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                <tbody>
+                <tr>
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <button class="mdl-button mdl-js-button mdl-button--primary" id="replay_btn">
+                            Replay
+                        </button>
+                        <!-- Accent-colored flat button -->
+                        <button class="mdl-button mdl-js-button mdl-button--accent" id="stop_replay_btn">
+                            Stop
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+
+                        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label getmdl-select getmdl-select__fullwidth">
+                            <input class="mdl-textfield__input" type="text" id="datetime_duration" value="1 day"
+                                   readonly
+                                   tabIndex="-1" data-val="1-0">
+                            <label for="datetime_duration" class="mdl-textfield__label">Datetime Duration</label>
+                            <ul for="datetime_duration" class="mdl-menu mdl-menu--bottom-left mdl-js-menu">
+                                <li class="mdl-menu__item" data-val="1-0">1 day</li>
+                                <li class="mdl-menu__item" data-val="2-0">2 days</li>
+                                <li class="mdl-menu__item" data-val="5-0">5 days</li>
+                                <li class="mdl-menu__item" data-val="10-0">10 days</li>
+                                <li class="mdl-menu__item" data-val="30-0">30 days</li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="replay_list"></div>
+                    </td>
+                </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="sidebar-pane" id="download">
+            <h1 class="sidebar-header">Download<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+            </h1>
+            <button class="mdl-button mdl-js-button mdl-button--primary" id="wave_download_btn">
+                Wave Download
+            </button>
+            <button class="mdl-button mdl-js-button mdl-button--primary" id="tide_download_btn">
+                Tide Download
+            </button>
+        </div>
+
+        <div class="sidebar-pane" id="settings">
+            <h1 class="sidebar-header">Setting<span class="sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+
+            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+                <tbody>
+                <tr>
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="refresh_switch">
+                            <input type="checkbox" id="refresh_switch" class="mdl-switch__input" checked>
+                            <span class="mdl-switch__label" id="refresh_switch_label">Refresh on</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label getmdl-select getmdl-select__fullwidth">
+                            <input class="mdl-textfield__input" type="text" id="refresh_time" value="10 secs"
+                                   onchange="refresh_time_change()" readonly
+                                   tabIndex="-1" data-val="10000">
+                            <label for="refresh_time" class="mdl-textfield__label">Refresh time</label>
+                            <ul for="refresh_time" class="mdl-menu mdl-menu--bottom-left mdl-js-menu">
+                                <li class="mdl-menu__item" data-val="5000">5 secs</li>
+                                <li class="mdl-menu__item" data-val="10000">10 secs</li>
+                                <li class="mdl-menu__item" data-val="30000">30 secs</li>
+                                <li class="mdl-menu__item" data-val="60000">60 secs</li>
+                                <li class="mdl-menu__item" data-val="120000">2 mins</li>
+                                <li class="mdl-menu__item" data-val="300000">5 mins</li>
+                                <li class="mdl-menu__item" data-val="600000">10 mins</li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="waves_switch">
+                            <input type="checkbox" id="waves_switch" class="mdl-switch__input" checked>
+                            <span class="mdl-switch__label" id="waves_switch_label">Waves on</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="mdl-data-table__cell--non-numeric">
+                        <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="tides_switch">
+                            <input type="checkbox" id="tides_switch" class="mdl-switch__input" checked>
+                            <span class="mdl-switch__label" id="tides_switch_label">Tides on</span>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="wave_history_count">
+                        </div>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+                                id="wave_history_clear_btn">
+                            Clear W History
+                        </button>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="tide_history_count">
+                        </div>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+                                id="tide_history_clear_btn">
+                            Clear T History
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!--<div id="p1" class="mdl-progress mdl-js-progress mdl-progress__indeterminate" style="width:100%;"></div>-->
+<div id="map" class="sidebar-map"></div>
+<a id="downloadAnchorElem" style="display:none"></a>
+<!--info bar -->
+<div id="snacker_container" class="mdl-js-snackbar mdl-snackbar">
+    <div class="mdl-snackbar__text"></div>
+    <button class="mdl-snackbar__action" type="button"></button>
+</div>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDubq5gCNwyhQ48XZDgcGxjAPEVn_hVjY0&v=3.exp&sensor=false"></script>
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="{{ url_for('static',filename='js/jquery-sidebar.js') }} "></script>
+<script type="text/javascript" src="{{ url_for('static', filename='map-icon/js/map-icons.js') }} "></script>
+<script defer src="https://code.getmdl.io/1.1.1/material.min.js"></script>
+<script defer src="https://cdn.rawgit.com/CreativeIT/getmdl-select/master/getmdl-select.min.js"></script>
+
+<script src="{{ url_for('static',filename='js/renderjson.js') }}"></script>
+<script src="{{ url_for('static',filename='js/zepto.min.js') }}"></script>
+<script src="{{ url_for('static',filename='js/mprogress.min.js') }}"></script>
+<script src="{{ url_for('static',filename='js/app.js') }}"></script>
+</body>
+</html>
